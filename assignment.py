@@ -83,4 +83,4 @@ plt.xlabel('Pressure Gradient (psi/ft)')
 plt.ylabel('Depth (ft)')
 plt.title('Depth vs Pressure Gradient')
 
-# plt.show()
+plt.show()
