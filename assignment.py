@@ -32,15 +32,14 @@ def findDetails(data3, odValue, collapsePressure, burstPressure, type, depth, su
                 print("---------{} Casing-----------".format(type))
                 if subHeading:
                     print("---------{} feet---------".format(depth))
-                print("O.D.:- {} inch".format(data3['O.D.'][i]))
+                print("O.D.:- {} inch".format(data3['O.D.'][i].strip()))
                 print("Nominal Weight:- {} lb/ft".format(data3['Nominal Weight'][i]))
                 print("Grade:- ",data3['Grade'][i])
                 print("Collapse pressure:- {} psi".format(data3['Collapse pressure'][i]))
                 print("Burst pressure:- {} psi".format(data3['Burst pressure'][i]))
                 break
 
-fig, axs = plt.subplots(5,2, gridspec_kw={'height_ratios': [3, 2, 2, 2, 2]})
-fig.delaxes(axs[0][1])
+fig, axs = plt.subplots(5,2, gridspec_kw={'height_ratios': [3, 1, 1, 1, 1]})
 
 data = pd.read_csv('data.csv')
 data2 = pd.read_csv('data2.csv')
@@ -120,6 +119,17 @@ for i in range(len(pressure_points)):
 
 
 print("Pressure Points-", pressure_points)
+
+colors = ['blue', 'red', 'black', 'green']
+for i in range(1,5):
+    axs[0][1].plot([i,i], [0, -1*pressure_points[i-1][1]], color = colors[i-1])
+    axs[0][1].plot([9-i,9-i], [0, -1*pressure_points[i-1][1]], color = colors[i-1])
+
+axs[0][1].text(8, -1*pressure_points[0][1], 'Conductor Casing')
+axs[0][1].text(7, -1*pressure_points[1][1], 'Surface Casing')
+axs[0][1].text(6, -1*pressure_points[2][1], 'Intermediate Casing')
+axs[0][1].text(5, -1*pressure_points[3][1], 'Production Casing')
+
 print("Mud Gradient-", mud_gradients)
 
 collapse_pressures = []
@@ -153,10 +163,6 @@ for i in range(len(internal_pressures)):
 burst_casing_shoe[-2] = 2898.1
 burst_casing_shoe[-1] = 3211.9
 print("Burst Casing Shoe-", burst_casing_shoe)
-
-# plt.xlabel('Pressure Gradient (psi/ft)')
-# plt.ylabel('Depth (ft)')
-# plt.title('Depth vs Pressure Gradient')
 
 burst_pressure_surface = []
 
