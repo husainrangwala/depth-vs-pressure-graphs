@@ -25,11 +25,26 @@ def calculateInternalPressure(formationPressure, depth, depthAtPreviousPoint):
     internalPressure = formationPressure - (depth - depthAtPreviousPoint)*0.1
     return round(internalPressure, 2)
 
-fig, axs = plt.subplots(5,2, gridspec_kw={'height_ratios': [3, 1, 1, 1, 1]})
+def findDetails(data3, odValue, collapsePressure, burstPressure, type, depth, subHeading=1):
+    for i in range(len(data3['O.D.'])):
+        if data3['O.D.'][i] == odValue:
+            if float(data3['Collapse pressure'][i]) > collapsePressure and float(data3['Burst pressure'][i]) > burstPressure:
+                print("---------{} Casing-----------".format(type))
+                if subHeading:
+                    print("---------{} feet---------".format(depth))
+                print("O.D.:- {} inch".format(data3['O.D.'][i]))
+                print("Nominal Weight:- {} lb/ft".format(data3['Nominal Weight'][i]))
+                print("Grade:- ",data3['Grade'][i])
+                print("Collapse pressure:- {} psi".format(data3['Collapse pressure'][i]))
+                print("Burst pressure:- {} psi".format(data3['Burst pressure'][i]))
+                break
+
+fig, axs = plt.subplots(5,2, gridspec_kw={'height_ratios': [3, 2, 2, 2, 2]})
 fig.delaxes(axs[0][1])
 
 data = pd.read_csv('data.csv')
 data2 = pd.read_csv('data2.csv')
+data3 = pd.read_csv('data3.csv')
 
 depth = list(data['depth(ft)'])
 pressure_gradient = list(data['pore_pressure_gradient(psi/ft)'])
@@ -143,6 +158,13 @@ print("Burst Casing Shoe-", burst_casing_shoe)
 # plt.ylabel('Depth (ft)')
 # plt.title('Depth vs Pressure Gradient')
 
+burst_pressure_surface = []
+
+for i in range(1, len(pressure_points)):
+    burst_pressure_surface.append(calculateInternalPressure(formation_pressures[i-1], pressure_points[i][1], 0))
+burst_pressure_surface.append(formation_pressures[-1])
+print("Burst Casing Surface- ", burst_pressure_surface)
+
 high_depth_collapse_pressure = []
 
 for i in range(len(pressure_points)):
@@ -159,16 +181,37 @@ for i in range(len(pressure_points)):
         collapsePressures.append([collapse_pressures[i], pressure_points[i][1]])
         high_depth_collapse_pressure.append(collapsePressures)
 
-burst_pressure_surface = []
+print("Collapse Pressure at High Depth- ",high_depth_collapse_pressure)
 
-for i in range(1, len(pressure_points)):
-    burst_pressure_surface.append(calculateInternalPressure(formation_pressures[i-1], pressure_points[i][1], 0))
-burst_pressure_surface.append(formation_pressures[-1])
+high_depth_burst = []
 
 for i in range(len(burst_casing_shoe)):
     axs[i+1][1].plot([burst_pressure_surface[i], burst_casing_shoe[i]], [0, -1*pressure_points[i][1]])
+    if pressure_points[i][1] > 2000:
+        interval = 2000
+        burstPressures = []
+        while interval < pressure_points[i][1]:
+            burstPressure = (interval * (burst_casing_shoe[i] - burst_pressure_surface[i])/pressure_points[i][1]) + burst_pressure_surface[i]
+            burstPressures.append([round(burstPressure,2), interval])
+            axs[i+1][1].plot(burstPressure, -1*interval, 'ro')
+            interval += 2000
+        burstPressures.append([burst_casing_shoe[i], pressure_points[i][1]])
+        high_depth_burst.append(burstPressures)
+        axs[i+1][1].plot(burst_casing_shoe[i], -1*pressure_points[i][1], 'ro')
 
-print("Burst Casing Surface- ", burst_pressure_surface)
+print("Burst Pressure at High Depth- ", high_depth_burst)
 
+print("\n\n")
+findDetails(data3, '20', collapse_pressures[0], burst_casing_shoe[0], 'Conductor', 0, 0)
+print("\n\n")
+findDetails(data3, '13 3/8', collapse_pressures[1], burst_casing_shoe[1], 'Surface', 0, 0)
+
+print("\n\n")
+for i in range(len(high_depth_collapse_pressure[0])):
+    findDetails(data3, '9 5/8', high_depth_collapse_pressure[0][i][0], high_depth_burst[0][i][0], 'Intermediate', high_depth_burst[0][i][1])
+
+print("\n\n")
+for i in range(len(high_depth_collapse_pressure[1])):
+    findDetails(data3, '7    ', high_depth_collapse_pressure[1][i][0], high_depth_burst[1][i][0], 'Production', high_depth_burst[1][i][1])
 
 plt.show()
